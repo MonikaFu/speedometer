@@ -159,14 +159,24 @@ var gauge = function(container, configuration) {
 	return that;
 };
 
+function colourWheel(d) {
+	var colours = ['#006633', '#008D36', '#95C11F', '#FCEA10', '#F39200', '#B91621', '#79110E'];
+
+	return colours[Math.round(d * this.majorTicks)]
+}
+
 function onDocumentReady() {
 	var powerGauge = gauge('#power-gauge', {
 		size: 200,
 		clipWidth: 250,
 		clipHeight: 150,
 		ringWidth: 20,
-		maxValue: 5,
+		minValue: 0,
+		maxValue: 6,
+		majorTicks: 7,
 		transitionMs: 100,
+		labelFormat: d3.format('d'),
+		arcColorFn: colourWheel
 	});
 	powerGauge.render();
 	
