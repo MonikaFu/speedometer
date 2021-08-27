@@ -165,8 +165,8 @@ function colourWheel(d) {
 	return colours[Math.round(d * this.majorTicks)]
 }
 
-var data = [{"technology": "Renewables", "disruption_score": 1}];
-let svgHeight= 200, svgWidth = 500;
+var data = [{"asset_class": "Corporate Bonds", "sector": "Aggregated", "technology": "Aggregated", "disruption_score": 1}];
+let svgHeight= 150, svgWidth = 250;
 
 let container = 'div[id="fig_speedometer"]';
 
@@ -184,9 +184,9 @@ container_div.classList.add("d3chart");
 container_div.classList.add("speedometer_chart");
 
 var powerGauge = gauge(container_div, {
-	size: 200,
-	clipWidth: 250,
-	clipHeight: 150,
+	size: svgWidth - 50,
+	clipWidth: svgWidth,
+	clipHeight: svgHeight,
 	ringWidth: 30,
 	minValue: 0,
 	maxValue: 7,
@@ -196,7 +196,17 @@ var powerGauge = gauge(container_div, {
 	arcColorFn: colourWheel
 });
 powerGauge.render();
-powerGauge.update(3);
+
+function updateReadings(data, assetClass, sector, technology) {
+
+	let subdata = data.filter(d => d.asset_class == assetClass);
+    subdata = subdata.filter(d => d.sector == sector);
+    subdata = subdata.filter(d => d.technology == technology);
+	
+	powerGauge.update(subdata[0].disruption_score);
+}
+	
+updateReadings(data, "Corporate Bonds", "Aggregated", "Aggregated");
 
 
 
