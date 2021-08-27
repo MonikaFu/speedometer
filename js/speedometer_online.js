@@ -1,3 +1,5 @@
+//Adapted from: http://bl.ocks.org/msqr/3202712
+
 var gauge = function(container, configuration) {
 	var that = {};
 	var config = {
@@ -170,9 +172,9 @@ function onDocumentReady() {
 		size: 200,
 		clipWidth: 250,
 		clipHeight: 150,
-		ringWidth: 20,
+		ringWidth: 30,
 		minValue: 0,
-		maxValue: 6,
+		maxValue: 7,
 		majorTicks: 7,
 		transitionMs: 100,
 		labelFormat: d3.format('d'),
