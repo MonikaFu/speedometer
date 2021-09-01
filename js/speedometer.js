@@ -1,3 +1,47 @@
+class speedometer {
+	constructor(container, data, labels, opts) {
+		let svgHeight = opts.svgHeight, svgWidth = opts.svgWidth;
+
+		let container_div;
+		if (typeof container === "string") {
+		    container_div = document.querySelector(container);
+		} else {
+		    container_div = container;
+		}
+
+		d3.select(container_div).attr("chart_type", "speedometer");
+		d3.select(container_div).attr("chart_type_data_download", "speedometer"); //matching the names in the export/ folder
+
+		container_div.classList.add("d3chart");
+		container_div.classList.add("speedometer_chart");
+
+		var powerGauge = gauge(container_div, {
+			size: svgWidth - 50,
+			clipWidth: svgWidth,
+			clipHeight: svgHeight,
+			ringWidth: 30,
+			minValue: 0,
+			maxValue: 7,
+			majorTicks: 7,
+			transitionMs: 100,
+			labelFormat: d3.format('d'),
+			arcColorFn: colourWheel
+		});
+		powerGauge.render();
+
+		function updateReadings(data, portfolioName, assetClass, sector, technology) {
+
+			let subdata = data.filter(d => d.asset_class == assetClass);
+		    subdata = subdata.filter(d => d.sector == sector);
+		    subdata = subdata.filter(d => d.technology == technology);
+			
+			powerGauge.update(subdata[0].disruption_score);
+		}
+			
+		updateReadings(data, "this_port", "Corporate Bonds", "Aggregated", "Aggregated");
+			}
+};
+
 var gauge = function(container, configuration) {
 	var that = {};
 	var config = {
@@ -164,48 +208,6 @@ function colourWheel(d) {
 
 	return colours[Math.round(d * this.majorTicks)]
 }
-
-let svgHeight= 150, svgWidth = 250;
-
-let container = 'div[id="speedometer"]';
-
-let container_div;
-if (typeof container === "string") {
-    container_div = document.querySelector(container);
-} else {
-    container_div = container;
-}
-
-d3.select(container_div).attr("chart_type", "speedometer");
-d3.select(container_div).attr("chart_type_data_download", "speedometer"); //matching the names in the export/ folder
-
-container_div.classList.add("d3chart");
-container_div.classList.add("speedometer_chart");
-
-var powerGauge = gauge(container_div, {
-	size: svgWidth - 50,
-	clipWidth: svgWidth,
-	clipHeight: svgHeight,
-	ringWidth: 30,
-	minValue: 0,
-	maxValue: 7,
-	majorTicks: 7,
-	transitionMs: 100,
-	labelFormat: d3.format('d'),
-	arcColorFn: colourWheel
-});
-powerGauge.render();
-
-function updateReadings(data, portfolioName, assetClass, sector, technology) {
-
-	let subdata = data.filter(d => d.asset_class == assetClass);
-    subdata = subdata.filter(d => d.sector == sector);
-    subdata = subdata.filter(d => d.technology == technology);
-	
-	powerGauge.update(subdata[0].disruption_score);
-}
-	
-updateReadings(data_speedometer, "this_port", "Corporate Bonds", "Aggregated", "Aggregated");
 
 
 
