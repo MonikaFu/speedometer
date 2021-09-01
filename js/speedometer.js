@@ -165,10 +165,9 @@ function colourWheel(d) {
 	return colours[Math.round(d * this.majorTicks)]
 }
 
-var data = [{"asset_class": "Corporate Bonds", "sector": "Aggregated", "technology": "Aggregated", "disruption_score": 1}];
 let svgHeight= 150, svgWidth = 250;
 
-let container = 'div[id="fig_speedometer"]';
+let container = 'div[id="speedometer"]';
 
 let container_div;
 if (typeof container === "string") {
@@ -197,7 +196,7 @@ var powerGauge = gauge(container_div, {
 });
 powerGauge.render();
 
-function updateReadings(data, assetClass, sector, technology) {
+function updateReadings(data, portfolioName, assetClass, sector, technology) {
 
 	let subdata = data.filter(d => d.asset_class == assetClass);
     subdata = subdata.filter(d => d.sector == sector);
@@ -206,7 +205,7 @@ function updateReadings(data, assetClass, sector, technology) {
 	powerGauge.update(subdata[0].disruption_score);
 }
 	
-updateReadings(data, "Corporate Bonds", "Aggregated", "Aggregated");
+updateReadings(data_speedometer, "this_port", "Corporate Bonds", "Aggregated", "Aggregated");
 
 
 
