@@ -1,3 +1,7 @@
-div.d3chart svg g.pointer {
+div.d3chart svg g.pointer_portfolio {
+	fill:  #7D4E24;
+}
+
+div.d3chart svg g.pointer_benchmark {
 	fill:  #B17F4A;
 }

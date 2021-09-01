@@ -29,17 +29,22 @@ class speedometer {
 		});
 		powerGauge.render();
 
-		function updateReadings(data, portfolioName, assetClass, sector, technology) {
+		function updateReadings(data, isMainPortfolio, portfolioName, assetClass, sector, technology) {
+			let subdata = data.filter(d => d.portfolio_name == portfolioName);
+			subdata = subdata.filter(d => d.asset_class == assetClass);
+			subdata = subdata.filter(d => d.sector == sector);
+			subdata = subdata.filter(d => d.technology == technology);
 
-			let subdata = data.filter(d => d.asset_class == assetClass);
-		    subdata = subdata.filter(d => d.sector == sector);
-		    subdata = subdata.filter(d => d.technology == technology);
-			
-			powerGauge.update(subdata[0].disruption_score);
+			if (isMainPortfolio) {
+				powerGauge.update_portfolio(subdata[0].disruption_score);
+			} else {
+				powerGauge.update_benchmark(subdata[0].disruption_score);
+			}
 		}
 			
-		updateReadings(data, "this_port", "Corporate Bonds", "Aggregated", "Aggregated");
-			}
+		updateReadings(data, true, "this_port", "Corporate Bonds", "Aggregated", "Aggregated");
+		updateReadings(data, false, "benchmark", "Corporate Bonds", "Aggregated", "Aggregated");
+	}
 };
 
 var gauge = function(container, configuration) {
@@ -168,24 +173,35 @@ var gauge = function(container, configuration) {
 				})
 				.text(config.labelFormat);
 
+
 		var lineData = [ [config.pointerWidth / 2, 0], 
 						[0, -pointerHeadLength],
 						[-(config.pointerWidth / 2), 0],
 						[0, config.pointerTailLength],
 						[config.pointerWidth / 2, 0] ];
-		var pointerLine = d3.line().curve(d3.curveLinear)
-		var pg = svg.append('g').data([lineData])
-				.attr('class', 'pointer')
+		var pointerLine = d3.line().curve(d3.curveLinear);
+
+		var pg_b = svg.append('g').data([lineData])
+				.attr('class', 'pointer_benchmark')
 				.attr('transform', centerTx);
 				
-		pointer = pg.append('path')
+		pointer_bench = pg_b.append('path')
 			.attr('d', pointerLine/*function(d) { return pointerLine(d) +'Z';}*/ )
-			.attr('transform', 'rotate(' +config.minAngle +')');
+			.attr('transform', 'rotate(' + config.minAngle +')')
+			.attr('visibility', 'hidden');
+
+		var pg = svg.append('g').data([lineData])
+				.attr('class', 'pointer_portfolio')
+				.attr('transform', centerTx);
+				
+		pointer_port = pg.append('path')
+			.attr('d', pointerLine/*function(d) { return pointerLine(d) +'Z';}*/ )
+			.attr('transform', 'rotate(' + config.minAngle +')');
 			
-		update(newValue === undefined ? 0 : newValue);
+		update_portfolio(newValue === undefined ? 0 : newValue);
 	}
 	that.render = render;
-	function update(newValue, newConfiguration) {
+	function update(newValue, pointer, newConfiguration) {
 		if ( newConfiguration  !== undefined) {
 			configure(newConfiguration);
 		}
@@ -194,9 +210,20 @@ var gauge = function(container, configuration) {
 		pointer.transition()
 			.duration(config.transitionMs)
 			.ease(d3.easeElastic)
-			.attr('transform', 'rotate(' +newAngle +')');
+			.attr('transform', 'rotate(' + newAngle +')');
 	}
 	that.update = update;
+
+	function update_portfolio(newValue, newConfiguration) {
+		update(newValue, pointer_port, newConfiguration)
+	}
+	that.update_portfolio = update_portfolio;
+
+	function update_benchmark(newValue, newConfiguration) {
+		pointer_bench.attr('visibility', 'visible')
+		update(newValue, pointer_bench, newConfiguration)
+	}
+	that.update_benchmark = update_benchmark;
 
 	configure(configuration);
 	

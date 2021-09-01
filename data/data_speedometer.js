@@ -1,2 +1,2 @@
-var data_speedometer = [{"portfolio_name": "this_port", "asset_class": "Corporate Bonds", "sector": "Aggregated", "technology": "Aggregated", "disruption_score": 1},
-{"portfolio_name": "benchmark", "asset_class": "Corporate Bonds", "sector": "Aggregated", "technology": "Aggregated", "disruption_score": 1.5}]
+var data_speedometer = [{"portfolio_name": "this_port", "asset_class": "Corporate Bonds", "sector": "Aggregated", "technology": "Aggregated", "disruption_score": 4.5},
+{"portfolio_name": "benchmark", "asset_class": "Corporate Bonds", "sector": "Aggregated", "technology": "Aggregated", "disruption_score": 2}]
