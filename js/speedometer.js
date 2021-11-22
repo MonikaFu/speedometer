@@ -21,10 +21,10 @@ class speedometer {
 			clipHeight: svgHeight,
 			ringWidth: 30,
 			minValue: 0,
-			maxValue: 7,
-			majorTicks: 7,
+			maxValue: 6,
+			majorTicks: 6,
 			transitionMs: 100,
-			labelFormat: d3.format('d'),
+			labelFormat: function(d) { return d < 6 ? d3.format('d')(d) : "6+";},
 			arcColorFn: colourWheel
 		});
 		powerGauge.render();
@@ -71,6 +71,7 @@ var gauge = function(container, configuration) {
 		majorTicks					: 5,
 		labelFormat					: d3.format('d'),
 		labelInset					: 10,
+		labelAngleOffset			: -2,
 		
 		arcColorFn					: d3.interpolateHsl(d3.rgb('#e8e2ca'), d3.rgb('#3e6c0a'))
 	};
@@ -124,7 +125,7 @@ var gauge = function(container, configuration) {
 				return deg2rad(config.minAngle + (ratio * range));
 			})
 			.endAngle(function(d, i) {
-				var ratio = d * (i+1);
+				var ratio = d * (i + 1);
 				return deg2rad(config.minAngle + (ratio * range));
 			});
 	}
@@ -169,7 +170,7 @@ var gauge = function(container, configuration) {
 				.attr('transform', function(d) {
 					var ratio = scale(d);
 					var newAngle = config.minAngle + (ratio * range);
-					return 'rotate(' +newAngle +') translate(0,' +(config.labelInset - r) +')';
+					return 'rotate(' + (newAngle + config.labelAngleOffset) +') translate(0,' + (config.labelInset - r) +')';
 				})
 				.text(config.labelFormat);
 
@@ -231,7 +232,7 @@ var gauge = function(container, configuration) {
 };
 
 function colourWheel(d) {
-	var colours = ['#006633', '#008D36', '#95C11F', '#FCEA10', '#F39200', '#B91621', '#79110E'];
+	var colours = ['#008D36', '#FFD204', '#E69703', '#DB5B00', '#EB2100', '#A30202'];
 
 	return colours[Math.round(d * this.majorTicks)]
 }
