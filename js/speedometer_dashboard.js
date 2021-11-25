@@ -83,7 +83,9 @@ class speedometer_dashboard {
 				size: width - (width / 10),
 				clipWidth: width,
 				clipHeight: height,
-				ringWidth: (3/25) * width,
+				ringWidth: (3/20) * width,
+				pointerWidth: 0.05 * width,
+				pointerTailLength: (0.05 * width) / 2,
 				marginTop: margin.top / 2,
 				minValue: 0,
 				maxValue: 6,
@@ -95,20 +97,24 @@ class speedometer_dashboard {
 			});
 			powerGauge.render();
 
-			function updateReadings(data, isMainPortfolio, portfolioName, sector, technology) {
+			function updateReadings(data, whichReading, portfolioName, sector, technology) {
 				let subdata = data.filter(d => d.ald_sector == sector);
 				subdata = subdata.filter(d => d.technology == technology);
 				subdata = subdata.filter(d => d.portfolio_name == portfolioName);
+				subdata = subdata.filter(d => d.tdm_metric == whichReading);
 
-				if (isMainPortfolio) {
+				if (whichReading === 'portfolio') {
 					powerGauge.update_portfolio(subdata[0].tdm_value);
-				} else {
+				} else if (whichReading === 'scenario') {
+					powerGauge.update_scenario_line(subdata[0].tdm_value);
+				} else if (whichReading === 'benchmark') {
 					powerGauge.update_benchmark(subdata[0].tdm_value);
 				}
 			}
 				
-			updateReadings(data, true, portfolio_name, sector, technology);
-			//updateReadings(data, false, "benchmark", "Corporate Bonds", "Aggregated", "Aggregated");
+			updateReadings(data, 'portfolio', portfolio_name, sector, technology);
+			updateReadings(data, 'scenario', portfolio_name, sector, technology);
+			//updateReadings(data, 'benchmark', "benchmark", "Corporate Bonds", "Aggregated", "Aggregated");
 		}
 
 		insertGauge(this.container, 'portfolio_dial', data, main_speed_width, main_speed_height, 'Aggregate', 'Aggregate', portfolio_name, null, 'Portfolio result');
@@ -117,7 +123,7 @@ class speedometer_dashboard {
 		
 		let selected_sector = sector;
       	sector_selector.length = 0;
-      	let sector_names = d3.map(data.filter(d => d.ald_sector != "Aggregate"), d => d.ald_sector).keys();
+      	let sector_names = d3.map(data.filter(d => d.ald_sector != 'Aggregate'), d => d.ald_sector).keys();
       	sector_names.forEach(sector_name => sector_selector.add(new Option(sector_name, sector_name)));
       	sector_selector.options[Math.max(0, sector_names.indexOf(selected_sector))].selected = 'selected';
       	//resize_inline_text_dropdown(null, sector_selector);
@@ -309,12 +315,24 @@ var gauge = function(container, configuration) {
 			.attr('d', pointerLine/*function(d) { return pointerLine(d) +'Z';}*/ )
 			.attr('transform', 'rotate(' + config.minAngle +')');
 
+		var scen_line_g = svg.append('g')
+			.attr('class', 'scenario_line')
+			.attr('transform', centerTx);
+
+		scen_line = scen_line_g.append('line')
+			.attr('x1', - r + config.ringInset)
+			.attr('y1', 0)
+			.attr('x2', - r + config.ringInset + config.ringWidth)
+			.attr('y2' , 0)
+			.attr('transform', 'rotate(' + config.minAngle +')');
+		
+
 		if (config.title != null) {
-			svg.append("text")
-		        .attr("x", (config.clipWidth / 2))             
-		        .attr("y", (config.marginTop * 0.75))
-		        .attr("text-anchor", "middle")  
-		        .attr("class", "chart_title") 
+			svg.append('text')
+		        .attr('x', (config.clipWidth / 2))             
+		        .attr('y', (config.marginTop * 0.75))
+		        .attr('text-anchor', 'middle')  
+		        .attr('class', 'chart_title') 
 		        .text(config.title);
 		}
 			
@@ -325,7 +343,9 @@ var gauge = function(container, configuration) {
 		if ( newConfiguration  !== undefined) {
 			configure(newConfiguration);
 		}
-		var ratio = scale(newValue);
+		let newValueRestricted = Math.min(6,Math.max(0, newValue));
+
+		var ratio = scale(newValueRestricted);
 		var newAngle = config.minAngle + (ratio * range);
 		pointer.transition()
 			.duration(config.transitionMs)
@@ -344,6 +364,16 @@ var gauge = function(container, configuration) {
 		update(newValue, pointer_bench, newConfiguration)
 	}
 	that.update_benchmark = update_benchmark;
+
+	function update_scenario_line(newValue, newConfiguration) {
+		if ( newConfiguration  === undefined) {
+			newConfiguration = config;
+			newConfiguration.minAngle = 0;
+			newConfiguration.maxAngle = 180;
+		}
+		update(newValue, scen_line, newConfiguration);
+	}
+	that.update_scenario_line = update_scenario_line;
 
 	configure(configuration);
 	
