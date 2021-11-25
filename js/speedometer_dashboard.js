@@ -83,7 +83,9 @@ class speedometer_dashboard {
 				size: width - (width / 10),
 				clipWidth: width,
 				clipHeight: height,
-				ringWidth: (3/25) * width,
+				ringWidth: (3/20) * width,
+				pointerWidth: 0.05 * width,
+				pointerTailLength: (0.05 * width) / 2,
 				marginTop: margin.top / 2,
 				minValue: 0,
 				maxValue: 6,
@@ -101,6 +103,7 @@ class speedometer_dashboard {
 				subdata = subdata.filter(d => d.portfolio_name == portfolioName);
 
 				if (isMainPortfolio) {
+					subdata = subdata.filter(d => d.tdm_metric == 'portfolio')
 					powerGauge.update_portfolio(subdata[0].tdm_value);
 				} else {
 					powerGauge.update_benchmark(subdata[0].tdm_value);
@@ -117,7 +120,7 @@ class speedometer_dashboard {
 		
 		let selected_sector = sector;
       	sector_selector.length = 0;
-      	let sector_names = d3.map(data.filter(d => d.ald_sector != "Aggregate"), d => d.ald_sector).keys();
+      	let sector_names = d3.map(data.filter(d => d.ald_sector != 'Aggregate'), d => d.ald_sector).keys();
       	sector_names.forEach(sector_name => sector_selector.add(new Option(sector_name, sector_name)));
       	sector_selector.options[Math.max(0, sector_names.indexOf(selected_sector))].selected = 'selected';
       	//resize_inline_text_dropdown(null, sector_selector);
@@ -310,11 +313,11 @@ var gauge = function(container, configuration) {
 			.attr('transform', 'rotate(' + config.minAngle +')');
 
 		if (config.title != null) {
-			svg.append("text")
-		        .attr("x", (config.clipWidth / 2))             
-		        .attr("y", (config.marginTop * 0.75))
-		        .attr("text-anchor", "middle")  
-		        .attr("class", "chart_title") 
+			svg.append('text')
+		        .attr('x', (config.clipWidth / 2))             
+		        .attr('y', (config.marginTop * 0.75))
+		        .attr('text-anchor', 'middle')  
+		        .attr('class', 'chart_title') 
 		        .text(config.title);
 		}
 			
@@ -325,7 +328,9 @@ var gauge = function(container, configuration) {
 		if ( newConfiguration  !== undefined) {
 			configure(newConfiguration);
 		}
-		var ratio = scale(newValue);
+		let newValueRestricted = Math.min(6,Math.max(0, newValue));
+
+		var ratio = scale(newValueRestricted);
 		var newAngle = config.minAngle + (ratio * range);
 		pointer.transition()
 			.duration(config.transitionMs)
