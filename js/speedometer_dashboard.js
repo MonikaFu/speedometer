@@ -97,21 +97,24 @@ class speedometer_dashboard {
 			});
 			powerGauge.render();
 
-			function updateReadings(data, isMainPortfolio, portfolioName, sector, technology) {
+			function updateReadings(data, whichReading, portfolioName, sector, technology) {
 				let subdata = data.filter(d => d.ald_sector == sector);
 				subdata = subdata.filter(d => d.technology == technology);
 				subdata = subdata.filter(d => d.portfolio_name == portfolioName);
+				subdata = subdata.filter(d => d.tdm_metric == whichReading);
 
-				if (isMainPortfolio) {
-					subdata = subdata.filter(d => d.tdm_metric == 'portfolio')
+				if (whichReading === 'portfolio') {
 					powerGauge.update_portfolio(subdata[0].tdm_value);
-				} else {
+				} else if (whichReading === 'scenario') {
+					powerGauge.update_scenario_line(subdata[0].tdm_value);
+				} else if (whichReading === 'benchmark') {
 					powerGauge.update_benchmark(subdata[0].tdm_value);
 				}
 			}
 				
-			updateReadings(data, true, portfolio_name, sector, technology);
-			//updateReadings(data, false, "benchmark", "Corporate Bonds", "Aggregated", "Aggregated");
+			updateReadings(data, 'portfolio', portfolio_name, sector, technology);
+			updateReadings(data, 'scenario', portfolio_name, sector, technology);
+			//updateReadings(data, 'benchmark', "benchmark", "Corporate Bonds", "Aggregated", "Aggregated");
 		}
 
 		insertGauge(this.container, 'portfolio_dial', data, main_speed_width, main_speed_height, 'Aggregate', 'Aggregate', portfolio_name, null, 'Portfolio result');
@@ -312,6 +315,18 @@ var gauge = function(container, configuration) {
 			.attr('d', pointerLine/*function(d) { return pointerLine(d) +'Z';}*/ )
 			.attr('transform', 'rotate(' + config.minAngle +')');
 
+		var scen_line_g = svg.append('g')
+			.attr('class', 'scenario_line')
+			.attr('transform', centerTx);
+
+		scen_line = scen_line_g.append('line')
+			.attr('x1', - r + config.ringInset)
+			.attr('y1', 0)
+			.attr('x2', - r + config.ringInset + config.ringWidth)
+			.attr('y2' , 0)
+			.attr('transform', 'rotate(' + config.minAngle +')');
+		
+
 		if (config.title != null) {
 			svg.append('text')
 		        .attr('x', (config.clipWidth / 2))             
@@ -349,6 +364,16 @@ var gauge = function(container, configuration) {
 		update(newValue, pointer_bench, newConfiguration)
 	}
 	that.update_benchmark = update_benchmark;
+
+	function update_scenario_line(newValue, newConfiguration) {
+		if ( newConfiguration  === undefined) {
+			newConfiguration = config;
+			newConfiguration.minAngle = 0;
+			newConfiguration.maxAngle = 180;
+		}
+		update(newValue, scen_line, newConfiguration);
+	}
+	that.update_scenario_line = update_scenario_line;
 
 	configure(configuration);
 	
