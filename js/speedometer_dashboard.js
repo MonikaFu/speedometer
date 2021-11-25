@@ -257,6 +257,12 @@ var gauge = function(container, configuration) {
 	that.isRendered = isRendered;
 	
 	function render(newValue) {
+		const tooltip = container
+      		.append("div")
+      		.attr("class", "d3tooltip")
+      		.style("display", "none")
+    		;
+
 		svg = container
 			.append('svg:svg')
 				.attr('class', 'gauge')
@@ -275,7 +281,10 @@ var gauge = function(container, configuration) {
 				.attr('fill', function(d, i) {
 					return config.arcColorFn(d * i);
 				})
-				.attr('d', arc);
+				.attr('d', arc)
+				.on("mouseover", mouseover_arc)
+        		.on("mouseout", mouseout)
+        		.on("mousemove", mousemove);
 		
 		var lg = svg.append('g')
 				.attr('class', 'label')
@@ -335,7 +344,22 @@ var gauge = function(container, configuration) {
 		        .attr('class', 'chart_title') 
 		        .text(config.title);
 		}
-			
+
+		function mouseover_pointer(d) {
+		    tooltip.html(d)
+		    .style("display", "inline-block")
+		}
+
+		function mousemove(d) {
+			tooltip
+		    	.style("left", d3.event.pageX + 10 + "px")
+		    	.style("top", d3.event.pageY - 20 + "px")
+		}
+
+		function mouseout(d) {
+		    tooltip.style("display", "none")
+		}
+
 		update_portfolio(newValue === undefined ? 0 : newValue);
 	}
 	that.render = render;
@@ -384,4 +408,4 @@ function colourWheel(d) {
 	var colours = ['#008D36', '#FFD204', '#E69703', '#DB5B00', '#EB2100', '#A30202'];
 
 	return colours[Math.round(d * this.majorTicks)]
-}
+};
