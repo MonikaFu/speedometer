@@ -426,7 +426,7 @@ div.main_dial svg {
   margin:  auto;
 }
 
-div.d3chart svg g.scenario_line {
+div.d3chart svg g.scenario_line line {
   stroke: #000000;
   stroke-width: 1%; 
 

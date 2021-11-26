@@ -39,7 +39,7 @@ class speedometer_dashboard {
     	chart_width = width - margin.left - margin.right,
     	chart_height = height - margin.top - margin.bottom;
 
-    	const main_speed_height = Math.floor(chart_height/ 3),
+    	const main_speed_height = Math.floor(chart_height/ 3) + margin.top,
     	main_speed_width = Math.floor(chart_width / 2),
     	small_speed_height = Math.floor(chart_height / 4),
     	small_speed_width = Math.floor(chart_width / 4);
@@ -79,14 +79,14 @@ class speedometer_dashboard {
 
 		function insertGauge(container, div_class, data, width, height, sector, technology, portfolio_name, benchmark_name, chart_title) {
 			let div = container.select('.' + div_class);
-			var powerGauge = gauge(div, {
+			let config_gauge = {
 				size: width - (width / 10),
 				clipWidth: width,
 				clipHeight: height,
 				ringWidth: (3/20) * width,
 				pointerWidth: 0.05 * width,
 				pointerTailLength: (0.05 * width) / 2,
-				marginTop: margin.top / 2,
+				marginTop: margin.top * 0.75,
 				minValue: 0,
 				maxValue: 6,
 				majorTicks: 6,
@@ -94,7 +94,12 @@ class speedometer_dashboard {
 				labelFormat: function(d) { return d < 6 ? d3.format('d')(d) : '6+';},
 				arcColorFn: colourWheel,
 				title: chart_title
-			});
+			};
+			if (div_class == 'portfolio_dial') {
+				config_gauge.annotate = true;
+				config_gauge.marginTop = margin.top;
+			}
+			var powerGauge = gauge(div, config_gauge);
 			powerGauge.render();
 
 			function updateReadings(data, whichReading, portfolioName, sector, technology) {
@@ -187,6 +192,11 @@ var gauge = function(container, configuration) {
 		labelFormat					: d3.format('d'),
 		labelInset					: 10,
 		labelAngleOffset			: -2,
+
+		annotate 					: false,
+		annotationOffset 			: 5,
+
+		scenLabel 					: 'FSP',
 		
 		arcColorFn					: d3.interpolateHsl(d3.rgb('#e8e2ca'), d3.rgb('#3e6c0a')),
 		title 						: null
@@ -325,12 +335,19 @@ var gauge = function(container, configuration) {
 			.attr('x2', - r + config.ringInset + config.ringWidth)
 			.attr('y2' , 0)
 			.attr('transform', 'rotate(' + config.minAngle +')');
+
+		if (config.annotate) {
+			scen_label = scen_line_g.append('text')
+				.attr('x', - r - config.labelInset - config.annotationOffset)
+				.attr('y', 0)
+				.text(config.scenLabel);
+		}
 		
 
 		if (config.title != null) {
 			svg.append('text')
 		        .attr('x', (config.clipWidth / 2))             
-		        .attr('y', (config.marginTop * 0.75))
+		        .attr('y', (config.marginTop * 0.5))
 		        .attr('text-anchor', 'middle')  
 		        .attr('class', 'chart_title') 
 		        .text(config.title);
@@ -366,12 +383,25 @@ var gauge = function(container, configuration) {
 	that.update_benchmark = update_benchmark;
 
 	function update_scenario_line(newValue, newConfiguration) {
-		if ( newConfiguration  === undefined) {
-			newConfiguration = config;
-			newConfiguration.minAngle = 0;
-			newConfiguration.maxAngle = 180;
+		if ( newConfiguration  !== undefined) {
+			configure(newConfiguration);
+		} 
+
+		let newValueRestricted = Math.min(6,Math.max(0, newValue));
+
+		var ratio = scale(newValueRestricted);
+		var newAngle = ratio * range;
+		scen_line.transition()
+			.duration(config.transitionMs)
+			.ease(d3.easeElastic)
+			.attr('transform', 'rotate(' + newAngle +')');
+
+		if (config.annotate) {
+			scen_label.transition()
+				.duration(config.transitionMs)
+				.ease(d3.easeElastic)
+				.attr('transform', 'rotate(' + (newAngle + config.labelAngleOffset) +')');
 		}
-		update(newValue, scen_line, newConfiguration);
 	}
 	that.update_scenario_line = update_scenario_line;
 
