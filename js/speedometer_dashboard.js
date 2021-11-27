@@ -98,6 +98,7 @@ class speedometer_dashboard {
 			if (div_class == 'portfolio_dial') {
 				config_gauge.annotate = true;
 				config_gauge.marginTop = margin.top;
+				config_gauge.marginSides = (700 - width) / 2;
 			}
 			var powerGauge = gauge(div, config_gauge);
 			powerGauge.render();
@@ -175,6 +176,7 @@ var gauge = function(container, configuration) {
 		ringInset					: 20,
 		ringWidth					: 20,
 		marginTop 					: 0, 
+		marginSides 				: 0,
 		
 		pointerWidth				: 10,
 		pointerTailLength			: 5,
@@ -194,7 +196,8 @@ var gauge = function(container, configuration) {
 		labelAngleOffset			: -2,
 
 		annotate 					: false,
-		annotationOffset 			: 5,
+		annotationOffsetScen 		: 5,
+		annotationOffsetValues 		: 30,
 
 		scenLabel 					: 'FSP',
 		
@@ -218,6 +221,11 @@ var gauge = function(container, configuration) {
 	function deg2rad(deg) {
 		return deg * Math.PI / 180;
 	}
+
+	function point_coord(angle, radius) {
+		angle = deg2rad(angle);
+    	return [radius * Math.sin(angle), radius * Math.cos(angle) * -1];
+	};
 	
 	function newAngle(d) {
 		var ratio = scale(d);
@@ -258,7 +266,7 @@ var gauge = function(container, configuration) {
 	that.configure = configure;
 	
 	function centerTranslation() {
-		return 'translate(' + (config.clipWidth / 2) +','+ ((r * 1.1) + config.marginTop) +')';
+		return 'translate(' + (config.clipWidth / 2 + config.marginSides) +','+ ((r * 1.1) + config.marginTop) +')';
 	}
 	
 	function isRendered() {
@@ -270,7 +278,7 @@ var gauge = function(container, configuration) {
 		svg = container
 			.append('svg:svg')
 				.attr('class', 'gauge')
-				.attr('width', config.clipWidth)
+				.attr('width', config.clipWidth + config.marginSides * 2)
 				.attr('height', config.clipHeight + config.marginTop);
 		
 		var centerTx = centerTranslation();
@@ -338,18 +346,52 @@ var gauge = function(container, configuration) {
 
 		if (config.annotate) {
 			scen_label = scen_line_g.append('text')
-				.attr('x', - r - config.labelInset - config.annotationOffset)
+				.attr('x', - r - config.labelInset - config.annotationOffsetScen)
 				.attr('y', 0)
 				.text(config.scenLabel);
+
+			let metricTextLabels = [
+			{label: 'Full mitigation', value_low: 0, value_high: 0}, 
+			{label: 'Managed mitigation', value_low: 0, value_high: 1},
+			{label: 'Managed disruption', value_low: 1, value_high: 1.5},
+			{label: 'Unmanaged disruption', value_low: 1.5, value_high: 8}
+			];
+
+			metricTextLabels.forEach(d => d.midAngle = config.minAngle + (scale((d.value_low + d.value_high) / 2) * range));
+			metricTextLabels.forEach(d => d.rightHalf = Math.sin(deg2rad(d.midAngle)) > 0);
+			metricTextLabels.forEach(d => d.texty = Math.round(point_coord(d.midAngle, r)[1]));
+    		metricTextLabels.forEach(d => 
+      			d.textx = 
+        			d.rightHalf ? 
+          			Math.round(point_coord(d.midAngle, r)[0]) + config.annotationOffsetValues : 
+          			Math.round(point_coord(d.midAngle, r)[0]) - config.annotationOffsetValues
+      		);
+
+			var mlg = svg.append('g')
+				.attr('class', 'label')
+				.attr('transform', centerTx);
+
+			mlg.selectAll('text')
+				.data(metricTextLabels)
+				.enter()
+				.append('text')
+				.attr('class', 'chart_title')
+				.attr("x", function(d, i) {return d.textx})
+      			.attr("y", function(d, i) {return d.texty})
+      			.attr("text-anchor", function(d, i) {
+            		return d.rightHalf ? "start" : "end";
+          		})
+      			.style("dominant-baseline", "middle")
+				.text(d => d.label);
 		}
 		
 
 		if (config.title != null) {
 			svg.append('text')
-		        .attr('x', (config.clipWidth / 2))             
+		        .attr('x', (config.clipWidth / 2 + config.marginSides))             
 		        .attr('y', (config.marginTop * 0.5))
 		        .attr('text-anchor', 'middle')  
-		        .attr('class', 'chart_title') 
+		        .attr('class', 'chart_title')
 		        .text(config.title);
 		}
 			
